@@ -1,34 +1,40 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_REGISTRY = "docker.io" // Docker Hub registry
-        DOCKER_IMAGE_NAME = "swarajjogi/img"
-        DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
-    }
-
     stages {
-        stage('Build') {
+        stage('Build app') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/swarajjogi/ise3.git']]
+                )
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Checkout code from GitHub
-                    checkout scm
-
-                    // Build Docker image
-                    docker.build(DOCKER_IMAGE_NAME)
+                    bat 'docker build -t jenkinsdocker .'
                 }
             }
         }
 
-        stage('Push') {
+        stage('Rename Image Tag') {
             steps {
                 script {
-                    // Push Docker image to Docker Hub
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', DOCKER_CREDENTIALS_ID) {
-                        docker.image(DOCKER_IMAGE_NAME).push()
-                    }
+                    bat 'docker tag jenkinsdocker swarajjogi/jenkinsdockerapp:image'
                 }
             }
         }
-    }
+
+        stage('Push Image to docker Hub') {
+            steps {
+                script {
+                    bat 'docker login -u swarajjogi -p Pass@1234'
+                    bat 'docker push swarajjogi/jenkinsdockerapp:image'
+                }
+            }
+        }
+    }
 }
