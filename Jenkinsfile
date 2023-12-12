@@ -13,7 +13,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat 'docker build -t jenkinsdocker .'
+                    bat 'docker build -t jenkinsdocker . , returnStatus: true'
                 }
             }
         }
